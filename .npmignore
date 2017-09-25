@@ -1,0 +1,10 @@
+.gitignore
+
+# Dont publish sources
+src/
+
+# Configuration only needed during build
+preprocessor.js
+tsconfig.json
+tslint.json
+yarn.lock
