@@ -23,19 +23,30 @@ describe("createNetworkInterface", () => {
 });
 
 describe("HTTPFetchUploadNetworkInterface", () => {
+    const { fetch } = window;
     let networkInterface: HTTPFetchUploadNetworkInterface;
+    let fetchMock: jest.Mock<typeof fetch>;
 
     beforeEach(() => {
-        networkInterface = createNetworkInterface({
-            uri: "/graphql"
+        networkInterface = createNetworkInterface({ uri: "/graphql" });
+        const fetchMock = jest.fn();
+        window.fetch = fetchMock;
+    });
+
+    afterAll(() => {
+        window.fetch = fetch;
+    });
+
+    test("falls back to the parents `fetchFromRemoteEndpoint` if no `File`s or `FileList`s are attached", () => {
+        expect(fetchFromRemoteEndpointMock).not.toBeCalled();
+        networkInterface.fetchFromRemoteEndpoint({
+            options: {},
+            request: { variables: { test: "test" } } as any
         });
+        expect(fetchFromRemoteEndpointMock).toBeCalled();
     });
 
     test("sends the data to the server using `fetch`", () => {
-        const { fetch } = window;
-        const fetchMock = jest.fn();
-        window.fetch = fetchMock;
-
         const query = parse(`
             mutation Test($file: Upload!) {
                 test(file: $file) {
@@ -59,39 +70,6 @@ describe("HTTPFetchUploadNetworkInterface", () => {
         expect(body.get("query")).toBe(printAST(query));
         expect(body.get("file")).toBe(file);
         expect(body.get("variables")).toBe(JSON.stringify({ file: "file" }));
-
-        window.fetch = fetch;
-    });
-
-    test("correctly handles arrays", () => {
-        const { fetch } = window;
-        const fetchMock = jest.fn();
-        window.fetch = fetchMock;
-
-        const query = parse(`
-            mutation Test($file: Upload!) {
-                test(file: $file) {
-                    id
-                }
-            }
-        `);
-
-        const file = new File([], "test");
-        const arr = [1, 2, 3];
-
-        expect(fetchMock).not.toBeCalled();
-        networkInterface.fetchFromRemoteEndpoint({
-            options: {},
-            request: {
-                query,
-                variables: { file, arr }
-            }
-        });
-        expect(fetchMock).toBeCalled();
-        const { body } = fetchMock.mock.calls[0][1];
-        expect(body.get("variables")).toBe(JSON.stringify({ file: "file", arr }));
-
-        window.fetch = fetch;
     });
 
     describe("fallbacks to super", () => {
@@ -100,7 +78,7 @@ describe("HTTPFetchUploadNetworkInterface", () => {
         } = HTTPFetchUploadNetworkInterface.prototype.constructor.prototype;
         const requestAndOptions = { request: {} as Request, options: {} };
         // tslint:disable-next-line:ban-types
-        let fetchFromRemoteEndpointMock: Function;
+        let fetchFromRemoteEndpointMock: jest.Mock<typeof fetchFromRemoteEndpoint>;
 
         beforeEach(() => {
             fetchFromRemoteEndpointMock = jest.fn();
@@ -127,15 +105,6 @@ describe("HTTPFetchUploadNetworkInterface", () => {
             networkInterface.fetchFromRemoteEndpoint({
                 options: {},
                 request: { variables: null } as any
-            });
-            expect(fetchFromRemoteEndpointMock).toBeCalled();
-        });
-
-        test("falls back to the parents `fetchFromRemoteEndpoint` if no `File`s or `FileList`s are attached", () => {
-            expect(fetchFromRemoteEndpointMock).not.toBeCalled();
-            networkInterface.fetchFromRemoteEndpoint({
-                options: {},
-                request: { variables: { test: "test" } } as any
             });
             expect(fetchFromRemoteEndpointMock).toBeCalled();
         });

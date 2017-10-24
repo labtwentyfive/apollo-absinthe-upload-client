@@ -3,8 +3,10 @@ import {
     NetworkInterfaceOptions,
     RequestAndOptions
 } from "apollo-client/transport/networkInterface";
+import { ReactNativeFile } from "./ReactNativeFile";
 
-type Files = Array<{ file: File | File[]; name: string }>;
+type UploadFile = File | ReactNativeFile;
+type UploadFiles = Array<{ file: UploadFile | UploadFile[]; name: string }>;
 
 export class HTTPFetchUploadNetworkInterface extends HTTPFetchNetworkInterface {
     public fetchFromRemoteEndpoint({
@@ -41,16 +43,22 @@ export function createNetworkInterface(
     return new HTTPFetchUploadNetworkInterface(options.uri, options.opts);
 }
 
-function extractFiles(variables: object): { variables: object; files: Files } {
-    const files: Files = [];
-    const walkTree = (tree: any, path: string[] = []): object => {
+function extractFiles(
+    variables: object
+): { variables: object; files: UploadFiles } {
+    const files: UploadFiles = [];
+    const walkTree = (
+        tree: any[] | object,
+        path: string[] = []
+    ): any[] | object => {
         const mapped = Array.isArray(tree) ? [...tree] : { ...tree };
         Object.keys(mapped).forEach(key => {
             const value = mapped[key];
-            if (isFile(value) || isFileList(value)) {
+            if (isUploadFile(value) || isFileList(value)) {
                 const name = [...path, key].join(".");
-                const file = isFileList(value) ? [...value] : (value as File);
-
+                const file = isFileList(value)
+                    ? [...value]
+                    : value as UploadFile;
                 files.push({ file, name });
                 mapped[key] = name;
             } else if (isObject(value)) {
@@ -70,8 +78,11 @@ function isObject(value: any) {
     return value !== null && typeof value === "object";
 }
 
-function isFile(value: any) {
-    return typeof File !== "undefined" && value instanceof File;
+function isUploadFile(value: any) {
+    return (
+        (typeof File !== "undefined" && value instanceof File) ||
+        value instanceof ReactNativeFile
+    );
 }
 
 function isFileList(value: any) {
