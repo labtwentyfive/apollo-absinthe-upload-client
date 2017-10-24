@@ -3,8 +3,10 @@ import {
     NetworkInterfaceOptions,
     RequestAndOptions
 } from "apollo-client/transport/networkInterface";
+import { ReactNativeFile } from "./ReactNativeFile";
 
-type Files = Array<{ file: File | File[]; name: string }>;
+type UploadFile = File | ReactNativeFile;
+type UploadFiles = Array<{ file: UploadFile | UploadFile[]; name: string }>;
 
 export class HTTPFetchUploadNetworkInterface extends HTTPFetchNetworkInterface {
     public fetchFromRemoteEndpoint({
@@ -42,16 +44,18 @@ export function createNetworkInterface(
     return new HTTPFetchUploadNetworkInterface(options.uri, options.opts);
 }
 
-function extractFiles(variables: object): { variables: object; files: Files } {
-    const files: Files = [];
+function extractFiles(
+    variables: object
+): { variables: object; files: UploadFiles } {
+    const files: UploadFiles = [];
     const walkTree = (tree: object, path: string[] = []): object => {
         const mapped = { ...tree };
         for (const [key, value] of Object.entries(mapped)) {
-            if (isFile(value) || isFileList(value)) {
+            if (isUploadFile(value) || isFileList(value)) {
                 const name = [...path, key].join(".");
                 const file = isFileList(value)
                     ? Array.from(value as FileList)
-                    : value as File;
+                    : value as UploadFile;
 
                 files.push({ file, name });
                 mapped[key] = name;
@@ -72,8 +76,11 @@ function isObject(value: any) {
     return value !== null && typeof value === "object";
 }
 
-function isFile(value: any) {
-    return typeof File !== "undefined" && value instanceof File;
+function isUploadFile(value: any) {
+    return (
+        (typeof File !== "undefined" && value instanceof File) ||
+        value instanceof ReactNativeFile
+    );
 }
 
 function isFileList(value: any) {
