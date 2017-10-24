@@ -3,10 +3,21 @@ import {
     NetworkInterfaceOptions,
     RequestAndOptions
 } from "apollo-client/transport/networkInterface";
-import { ReactNativeFile } from "./ReactNativeFile";
 
 type UploadFile = File | ReactNativeFile;
 type UploadFiles = Array<{ file: UploadFile | UploadFile[]; name: string }>;
+
+export class ReactNativeFile {
+    private uri: string;
+    private type: string;
+    private name: string;
+
+    constructor(params: { uri: string; type: string; name: string }) {
+        this.uri = params.uri;
+        this.type = params.type;
+        this.name = params.name;
+    }
+}
 
 export class HTTPFetchUploadNetworkInterface extends HTTPFetchNetworkInterface {
     public fetchFromRemoteEndpoint({
