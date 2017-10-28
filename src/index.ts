@@ -44,8 +44,8 @@ export function createNetworkInterface(
 
 function extractFiles(variables: object): { variables: object; files: Files } {
     const files: Files = [];
-    const walkTree = (tree: object, path: string[] = []): object => {
-        const mapped = { ...tree };
+    const walkTree = (tree: any, path: string[] = []): object => {
+        const mapped = isArray(tree) ? [...tree] : { ...tree };
         for (const [key, value] of Object.entries(mapped)) {
             if (isFile(value) || isFileList(value)) {
                 const name = [...path, key].join(".");
@@ -66,6 +66,10 @@ function extractFiles(variables: object): { variables: object; files: Files } {
         files,
         variables: walkTree(variables)
     };
+}
+
+function isArray(value: any) {
+    return value !== null && value instanceof Array;
 }
 
 function isObject(value: any) {
