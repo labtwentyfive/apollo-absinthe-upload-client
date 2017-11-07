@@ -63,6 +63,37 @@ describe("HTTPFetchUploadNetworkInterface", () => {
         window.fetch = fetch;
     });
 
+    test("correctly handles arrays", () => {
+        const { fetch } = window;
+        const fetchMock = jest.fn();
+        window.fetch = fetchMock;
+
+        const query = parse(`
+            mutation Test($file: Upload!) {
+                test(file: $file) {
+                    id
+                }
+            }
+        `);
+
+        const file = new File([], "test");
+        const arr = [1, 2, 3];
+
+        expect(fetchMock).not.toBeCalled();
+        networkInterface.fetchFromRemoteEndpoint({
+            options: {},
+            request: {
+                query,
+                variables: { file, arr }
+            }
+        });
+        expect(fetchMock).toBeCalled();
+        const { body } = fetchMock.mock.calls[0][1];
+        expect(body.get("variables")).toBe(JSON.stringify({ file: "file", arr }));
+
+        window.fetch = fetch;
+    });
+
     describe("fallbacks to super", () => {
         const {
             fetchFromRemoteEndpoint
