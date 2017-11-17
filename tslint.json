@@ -7,8 +7,7 @@
   "jsRules": {},
   "rules": {
     "ordered-imports": true,
-    "prettier": true,
-    "max-classes-per-file": false
+    "prettier": true
   },
   "rulesDirectory": ["tslint-plugin-prettier"]
 }

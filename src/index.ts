@@ -4,20 +4,14 @@ import {
     RequestAndOptions
 } from "apollo-client/transport/networkInterface";
 
+type ReactNativeFile = {
+    name: string;
+    type: string;
+    uri: string;
+};
+
 type UploadFile = File | ReactNativeFile;
 type UploadFiles = Array<{ file: UploadFile | UploadFile[]; name: string }>;
-
-export class ReactNativeFile {
-    private uri: string;
-    private type: string;
-    private name: string;
-
-    constructor(params: { uri: string; type: string; name: string }) {
-        this.uri = params.uri;
-        this.type = params.type;
-        this.name = params.name;
-    }
-}
 
 export class HTTPFetchUploadNetworkInterface extends HTTPFetchNetworkInterface {
     public fetchFromRemoteEndpoint({
@@ -92,10 +86,13 @@ function isObject(value: any) {
 function isUploadFile(value: any) {
     return (
         (typeof File !== "undefined" && value instanceof File) ||
-        value instanceof ReactNativeFile
+        // React Native treats any object that has a URI attribute as a file, see
+        // https://github.com/facebook/react-native/blob/v0.50.3/Libraries/Network/FormData.js#L70-L82
+        // for more details
+        (value && typeof value === "object" && value.uri != null)
     );
 }
 
-function isFileList(value: any) {
+function isFileList(value: any): value is FileList {
     return typeof FileList !== "undefined" && value instanceof FileList;
 }
