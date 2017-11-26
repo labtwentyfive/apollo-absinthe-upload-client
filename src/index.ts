@@ -4,21 +4,37 @@ import {
     RequestAndOptions
 } from "apollo-client/transport/networkInterface";
 
-interface IReactNativeFile {
-    uri: string;
-}
+export type UploadFileType = File;
+export type IsUploadFileType = typeof isUploadFile;
+export type ExtendedNetworkInterfaceAndOptionsType = NetworkInterfaceOptions & {
+    isUploadFile?: IsUploadFileType;
+};
 
-type UploadFile = File | IReactNativeFile;
-type UploadFiles = Array<{ file: UploadFile | UploadFile[]; name: string }>;
+type ExtractedFilesType = Array<{
+    file: UploadFileType | UploadFileType[];
+    name: string;
+}>;
 
 export class HTTPFetchUploadNetworkInterface extends HTTPFetchNetworkInterface {
+    private isUploadFile: IsUploadFileType;
+
+    constructor(
+        uri: NetworkInterfaceOptions["uri"],
+        opts: NetworkInterfaceOptions["opts"],
+        isUploadFile: IsUploadFileType
+    ) {
+        super(uri, opts);
+        this.isUploadFile = isUploadFile;
+    }
+
     public fetchFromRemoteEndpoint({
         request,
         options
     }: RequestAndOptions): Promise<Response> {
         if (typeof FormData !== "undefined" && isObject(request.variables)) {
             const { variables, files } = extractFiles(
-                request.variables as object
+                request.variables as object,
+                this.isUploadFile
             );
             if (files.length > 0) {
                 const formData = new FormData();
@@ -41,15 +57,22 @@ export class HTTPFetchUploadNetworkInterface extends HTTPFetchNetworkInterface {
 }
 
 export function createNetworkInterface(
-    options: NetworkInterfaceOptions
+    options: ExtendedNetworkInterfaceAndOptionsType
 ): HTTPFetchUploadNetworkInterface {
-    return new HTTPFetchUploadNetworkInterface(options.uri, options.opts);
+    const { uri, opts } = options;
+    const isUploadFileUnpacked = options.isUploadFile || isUploadFile;
+    return new HTTPFetchUploadNetworkInterface(uri, opts, isUploadFileUnpacked);
+}
+
+export function isUploadFile(value: any): value is UploadFileType {
+    return typeof File !== "undefined" && value instanceof File;
 }
 
 function extractFiles(
-    variables: object
-): { variables: object; files: UploadFiles } {
-    const files: UploadFiles = [];
+    variables: object,
+    isUploadFile: IsUploadFileType
+): { variables: object; files: ExtractedFilesType } {
+    const files: ExtractedFilesType = [];
     const walkTree = (
         tree: any[] | object,
         path: string[] = []
@@ -60,7 +83,7 @@ function extractFiles(
             if (isUploadFile(value) || isFileList(value)) {
                 const name = [...path, key].join(".");
                 const file = isFileList(value)
-                    ? [...value]
+                    ? Array.prototype.slice.call(value)
                     : value;
                 files.push({ file, name });
                 mapped[key] = name;
@@ -79,16 +102,6 @@ function extractFiles(
 
 function isObject(value: any) {
     return value !== null && typeof value === "object";
-}
-
-function isUploadFile(value: any): value is UploadFile {
-    return (
-        (typeof File !== "undefined" && value instanceof File) ||
-        // React Native treats any object that has a URI attribute as a file, see
-        // https://github.com/facebook/react-native/blob/v0.50.3/Libraries/Network/FormData.js#L70-L82
-        // for more details
-        (value && typeof value === "object" && value.uri != null)
-    );
 }
 
 function isFileList(value: any): value is FileList {

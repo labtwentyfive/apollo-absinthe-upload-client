@@ -1,8 +1,9 @@
 import { printAST } from "apollo-client";
 import { parse } from "graphql";
 import {
-    createNetworkInterface,
-    HTTPFetchUploadNetworkInterface
+    HTTPFetchUploadNetworkInterface,
+    UploadFileType,
+    createNetworkInterface
 } from "../index";
 
 declare global {
@@ -66,7 +67,32 @@ describe("HTTPFetchUploadNetworkInterface", () => {
     });
 
     test("sending a ReactNative-file to the server", () => {
-        const file = { name: "some name", type: "image/png", uri: "/some/uri" };
+        class ReactNativeFile {
+            public name: string;
+            public uri: string;
+            public type: string;
+
+            constructor({ name, uri, type }) {
+                this.name = name;
+                this.uri = uri;
+                this.type = type;
+            }
+        }
+
+        function isReactNativeUploadFile(value: any): value is UploadFileType {
+            return value instanceof ReactNativeFile;
+        }
+
+        const file = new ReactNativeFile({
+            name: "some name",
+            type: "image/png",
+            uri: "/some/uri"
+        });
+
+        networkInterface = createNetworkInterface({
+            uri: "/graphql",
+            isUploadFile: isReactNativeUploadFile
+        });
 
         expect(fetchMock).not.toBeCalled();
         networkInterface.fetchFromRemoteEndpoint({
