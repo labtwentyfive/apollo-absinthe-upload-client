@@ -28,8 +28,7 @@ const client = new ApolloClient({
 
 ### Optional dependencies
 
-This library uses `fetch` and `Object.entries`, if you target older browsers you
-can polyfill both.
+This library uses `fetch`, if you target older browsers you can polyfill both.
 
 ## License
 

@@ -1,7 +1,7 @@
 {
   "scripts": {
     "test": "yarn run jest",
-    "lint": "yarn run tslint --type-check -p .",
+    "lint": "yarn run tslint -p .",
     "build": "yarn run tsc -p .",
     "prepare": "yarn run lint && rm -rf dist/ && yarn run build"
   },

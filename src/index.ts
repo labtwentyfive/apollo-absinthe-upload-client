@@ -12,10 +12,9 @@ export class HTTPFetchUploadNetworkInterface extends HTTPFetchNetworkInterface {
         options
     }: RequestAndOptions): Promise<Response> {
         if (typeof FormData !== "undefined" && isObject(request.variables)) {
-            const {
-                variables,
-                files
-            } = extractFiles(request.variables as object);
+            const { variables, files } = extractFiles(
+                request.variables as object
+            );
             if (files.length > 0) {
                 const formData = new FormData();
                 formData.append("query", printAST(request.query));
@@ -46,19 +45,18 @@ function extractFiles(variables: object): { variables: object; files: Files } {
     const files: Files = [];
     const walkTree = (tree: any, path: string[] = []): object => {
         const mapped = Array.isArray(tree) ? [...tree] : { ...tree };
-        for (const [key, value] of Object.entries(mapped)) {
+        Object.keys(mapped).forEach(key => {
+            const value = mapped[key];
             if (isFile(value) || isFileList(value)) {
                 const name = [...path, key].join(".");
-                const file = isFileList(value)
-                    ? Array.from(value as FileList)
-                    : value as File;
+                const file = isFileList(value) ? [...value] : (value as File);
 
                 files.push({ file, name });
                 mapped[key] = name;
             } else if (isObject(value)) {
                 mapped[key] = walkTree(value, [...path, key]);
             }
-        }
+        });
         return mapped;
     };
 
