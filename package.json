@@ -6,7 +6,7 @@
     "prepare": "yarn run lint && rm -rf dist/ && yarn run build"
   },
   "name": "apollo-absinthe-upload-client",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "A network interface for Apollo that enables file-uploading to Absinthe back ends",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
