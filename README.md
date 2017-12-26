@@ -3,6 +3,12 @@
 A network interface for Apollo that enables file-uploading to Absinthe back
 ends.
 
+## Support for Apollo Client v2
+
+This package does not support Apollo Client v2. Please use
+[`apollo-absinthe-upload-link`](https://www.npmjs.com/package/apollo-absinthe-upload-link)
+instead.
+
 ## Difference between `apollo-upload-client` and `apollo-absinthe-upload-client`
 
 Both Apollo, through
